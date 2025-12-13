@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "active=false": { "model": "chunkeraser:block/chunk_eraser_idle" },
+    "active=true":  { "model": "chunkeraser:block/chunk_eraser_active" }
+  }
+}

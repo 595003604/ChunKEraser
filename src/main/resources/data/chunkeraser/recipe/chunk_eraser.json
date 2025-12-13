@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "R": {
+      "item": "minecraft:lapis_lazuli"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "G": {
+      "item": "minecraft:diamond"
+    }
+  },
+  "pattern": [
+    "RIR",
+    "IGI",
+    "RIR"
+  ],
+  "result": {
+    "id": "chunkeraser:chunk_eraser",
+    "count": 1
+  }
+}

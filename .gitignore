@@ -1,0 +1,44 @@
+# --- IDE (开发工具) ---
+# Eclipse
+bin/
+*.launch
+.settings/
+.metadata/
+.classpath
+.project
+
+# IntelliJ IDEA
+out/
+*.ipr
+*.iws
+*.iml
+.idea/
+
+# VS Code (如果以后用到)
+.vscode/
+
+# --- Gradle (构建工具) ---
+build/
+.gradle/
+gradle-app.setting
+.gradletasknamecache
+
+# --- NeoForge/Minecraft (游戏运行数据) ---
+# 这些文件夹包含了存档、日志、设置，不应该上传
+run/
+runs/
+run-data/
+logs/
+crash-reports/
+debug/
+
+# --- 操作系统临时文件 ---
+# Mac
+.DS_Store
+# Windows
+Thumbs.db
+
+# --- 其他 ---
+# 这个 "repo" 如果是你存放本地依赖库的文件夹，可以忽略。
+# 但如果你把只有你自己有的 jar 包放在这里面，忽略它会导致别人无法构建你的项目。
+repo/

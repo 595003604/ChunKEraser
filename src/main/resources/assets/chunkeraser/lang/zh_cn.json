@@ -1,0 +1,13 @@
+{
+  "itemGroup.chunkeraser": "区块清除器",
+  "block.chunkeraser.chunk_eraser": "区块清除器",
+
+  "chunkeraser.configuration.title": "Chunk Eraser Configs",
+  "chunkeraser.configuration.section.chunkeraser.common.toml": "Chunk Eraser Configs",
+  "chunkeraser.configuration.section.chunkeraser.common.toml.title": "Chunk Eraser Configs",
+  "chunkeraser.configuration.items": "Item List",
+  "chunkeraser.configuration.logDirtBlock": "Log Dirt Block",
+  "chunkeraser.configuration.magicNumberIntroduction": "Magic Number Text",
+  "chunkeraser.configuration.magicNumber": "Magic Number",
+  "menu.displayname.chunkeraser": "区块清除器"
+}

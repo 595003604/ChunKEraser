@@ -1,0 +1,13 @@
+{
+  "itemGroup.chunkeraser": "Chunk Eraser Mod",
+  "block.chunkeraser.chunk_eraser": "Chunk Eraser",
+
+  "chunkeraser.configuration.title": "Chunk Eraser Configs",
+  "chunkeraser.configuration.section.chunkeraser.common.toml": "Chunk Eraser Configs",
+  "chunkeraser.configuration.section.chunkeraser.common.toml.title": "Chunk Eraser Configs",
+  "chunkeraser.configuration.items": "Item List",
+  "chunkeraser.configuration.logDirtBlock": "Log Dirt Block",
+  "chunkeraser.configuration.magicNumberIntroduction": "Magic Number Text",
+  "chunkeraser.configuration.magicNumber": "Magic Number",
+  "menu.displayname.chunkeraser": "Chunk Eraser"
+}

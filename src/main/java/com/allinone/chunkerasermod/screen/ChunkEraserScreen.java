@@ -1,0 +1,149 @@
+package com.allinone.chunkerasermod.screen;
+
+import com.allinone.chunkerasermod.ChunkEraser;
+import com.allinone.chunkerasermod.block.ChunkEraserBlock;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+
+import java.util.List;
+
+public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(ChunkEraser.MODID, "textures/gui/chunk_eraser_gui.png");
+
+    private Button button_active;
+    private Button button_direction;
+    private Button button_range_add;
+    private Button button_range_sub;
+    private Button button_speed_add;
+    private Button button_speed_sub;
+
+    public ChunkEraserScreen(ChunkEraserMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title);
+        this.imageWidth = 176;
+        this.imageHeight = 166;
+    }
+
+    @Override
+    protected void init() {
+        //客户端执行
+        super.init();
+        int x = this.leftPos;
+        int y = this.topPos;
+        button_active = this.addRenderableWidget(Button.builder(Component.literal("启动开关"), (button) -> {
+                    if (this.minecraft != null && this.minecraft.gameMode != null) {
+                        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_ACTIVE_ID);
+                    }
+                })
+                .bounds(x + 45, y + 100, 80, 40)
+                .build());
+
+        button_direction = this.addRenderableWidget(Button.builder(Component.literal("方向"), (button) -> {
+                    if (this.minecraft != null && this.minecraft.gameMode != null) {
+                        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_DIRECTION_ID);
+                    }
+                })
+                .bounds(x + 45, y + 25, 18, 18)
+                .build());
+
+        button_range_add = this.addRenderableWidget(Button.builder(Component.literal("+"), (button) -> {
+                    if (this.minecraft != null && this.minecraft.gameMode != null) {
+                        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_RANGE_ADD_ID);
+                    }
+                })
+                .bounds(x + 45, y + 47, 18, 9)
+                .tooltip(Tooltip.create(Component.literal("增加范围，以机器所在区块为中心")))
+                .build());
+        button_range_sub = this.addRenderableWidget(Button.builder(Component.literal("-"), (button) -> {
+                    if (this.minecraft != null && this.minecraft.gameMode != null) {
+                        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_RANGE_SUB_ID);
+                    }
+                })
+                .bounds(button_range_add.getX(), button_range_add.getY() + 10, 18, 9)
+                .tooltip(Tooltip.create(Component.literal("减少范围，以机器所在区块为中心")))
+                .build());
+
+        button_speed_add = this.addRenderableWidget(Button.builder(Component.literal("+"), (button) -> {
+                    if (this.minecraft != null && this.minecraft.gameMode != null) {
+                        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_SPEED_ADD_ID);
+                    }
+                })
+                .bounds(x + 45, y + 70, 18, 9)
+                .tooltip(Tooltip.create(Component.literal("增加速度")))
+                .build());
+        button_speed_sub = this.addRenderableWidget(Button.builder(Component.literal("-"), (button) -> {
+                    if (this.minecraft != null && this.minecraft.gameMode != null) {
+                        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_SPEED_SUB_ID);
+                    }
+                })
+                .bounds(button_speed_add.getX(), button_speed_add.getY() + 10, 18, 9)
+                .tooltip(Tooltip.create(Component.literal("减少速度")))
+                .build());
+    }
+
+    @Override
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
+        // 绑定GUI纹理
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, TEXTURE);
+        // 计算GUI绘制位置（居中）
+        int x = this.leftPos;
+        int y = this.topPos;
+        // 绘制GUI背景
+        guiGraphics.blit(TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight);
+
+    }
+
+    @Override
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
+
+        guiGraphics.drawString(this.font, "方向：",
+                button_direction.getX() - this.leftPos - 25, button_direction.getY() - this.topPos + 5,4210752, false);
+
+        guiGraphics.drawString(this.font, "范围：",
+                button_range_add.getX() - this.leftPos - 25, button_range_add.getY() - this.topPos + 5,4210752, false);
+        guiGraphics.drawString(this.font, (menu.blockEntity.range * 2 + 1) + " × " + (menu.blockEntity.range * 2 + 1) + "区块",
+                button_range_add.getX() - this.leftPos + 25, button_range_add.getY() - this.topPos + 5,4210752, false);
+
+        guiGraphics.drawString(this.font, "速度：",
+                button_speed_add.getX() - this.leftPos - 25, button_speed_add.getY() - this.topPos + 5,4210752, false);
+        guiGraphics.drawString(this.font,  (menu.blockEntity.opsPerTick) + " (" + (menu.blockEntity.opsPerTick) * (menu.blockEntity.range * 2 + 1) * (menu.blockEntity.range * 2 + 1)  + "方块/tick)",
+                button_speed_add.getX() - this.leftPos + 25, button_speed_add.getY() - this.topPos + 5,4210752, false);
+
+        if (mouseX >= this.leftPos + 45 && mouseX <= this.leftPos + 65 && mouseY >= this.topPos && mouseY <= this.topPos + 20) {
+            List<Component> tooltipLines = List.of(
+                    Component.literal("此机器用于区块清除与地形平整"),
+                    Component.literal("清除地形时不会掉落物品，请检查目标区域是否有重要建筑").withStyle(ChatFormatting.RED),
+                    Component.literal("清除时会跳过未加载的方块，请确认区块已加载").withStyle(ChatFormatting.GRAY),
+                    Component.literal("工作中改变方向和范围设置，会重置清除进度").withStyle(ChatFormatting.GRAY),
+                    Component.literal("当运行到世界高度上下限时，机器会自动停止").withStyle(ChatFormatting.GRAY)
+            );
+            guiGraphics.renderComponentTooltip(this.font, tooltipLines, mouseX - this.leftPos , mouseY - this.topPos);
+        }
+    }
+
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        button_active.setTooltip(Tooltip.create(Component.literal(menu.blockEntity.getBlockState().getValue(ChunkEraserBlock.ACTIVE) ? "工作中~点击停止" : "点击启动机器")));
+
+        button_direction.setTooltip(Tooltip.create(Component.literal(menu.blockEntity.workDirection ? "清除机器下方区域，直至基岩层" : "清除机器上方区域，直至高度上限")));
+        button_direction.setMessage(Component.literal(menu.blockEntity.workDirection ? "⇩" : "⇧"));
+
+        button_range_add.active = menu.blockEntity.range < 20;
+        button_range_sub.active = menu.blockEntity.range > 0;
+
+        button_speed_add.active = menu.blockEntity.opsPerTick < 120;
+        button_speed_sub.active = menu.blockEntity.opsPerTick > 5;
+
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+}
