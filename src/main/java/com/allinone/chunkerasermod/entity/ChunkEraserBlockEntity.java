@@ -78,7 +78,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
         this.MachineY = pos.getY();
         resetCursor();
 
-        // itemStackHandler.setStackInSlot(0, new ItemStack(Items.STONE, Integer.MAX_VALUE));
+        itemStackHandler.setStackInSlot(0, new ItemStack(Items.STONE, Integer.MAX_VALUE));
     }
 
     public void cycleActive() {
@@ -283,7 +283,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+    public void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.putInt("cY", currentY);
         tag.putInt("cX", currentX);

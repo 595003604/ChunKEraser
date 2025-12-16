@@ -1,6 +1,7 @@
 package com.allinone.chunkerasermod;
 
 import com.allinone.chunkerasermod.block.ChunkEraserBlock;
+import com.allinone.chunkerasermod.component.ModDataComponents;
 import com.allinone.chunkerasermod.entity.ModEntities;
 import com.allinone.chunkerasermod.screen.ModMenus;
 import com.mojang.logging.LogUtils;
@@ -58,6 +59,7 @@ public class ChunkEraser {
 
         ModEntities.register(modEventBus);
         ModMenus.register(modEventBus);
+        ModDataComponents.register(modEventBus);
 
         NeoForge.EVENT_BUS.register(this);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);

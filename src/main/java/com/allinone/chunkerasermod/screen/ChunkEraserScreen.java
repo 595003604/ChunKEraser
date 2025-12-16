@@ -25,11 +25,12 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
     private Button button_speed_add;
     private Button button_speed_sub;
     private Button button_bedrock;
+    private Button button_is_placing;
 
     public ChunkEraserScreen(ChunkEraserMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageWidth = 176;
-        this.imageHeight = 166;
+        this.imageWidth = 256;
+        this.imageHeight = 256;
     }
 
     @Override
@@ -43,7 +44,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                         this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_ACTIVE_ID);
                     }
                 })
-                .bounds(x + 45, y + 100, 80, 40)
+                .bounds(x + 160, y + 100, 40, 40)
                 .build());
 
         button_direction = this.addRenderableWidget(Button.builder(Component.literal("方向"), (button) -> {
@@ -51,7 +52,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                         this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_DIRECTION_ID);
                     }
                 })
-                .bounds(x + 45, y + 25, 18, 18)
+                .bounds(x + 65, y + 25, 18, 18)
                 .build());
 
         button_range_add = this.addRenderableWidget(Button.builder(Component.literal("+"), (button) -> {
@@ -59,7 +60,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                         this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_RANGE_ADD_ID);
                     }
                 })
-                .bounds(x + 45, y + 47, 18, 9)
+                .bounds(x + 65, y + 47, 18, 9)
                 .tooltip(Tooltip.create(Component.literal("增加范围，以机器所在区块为中心")))
                 .build());
         button_range_sub = this.addRenderableWidget(Button.builder(Component.literal("-"), (button) -> {
@@ -76,7 +77,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                         this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_SPEED_ADD_ID);
                     }
                 })
-                .bounds(x + 45, y + 70, 18, 9)
+                .bounds(x + 65, y + 70, 18, 9)
                 .tooltip(Tooltip.create(Component.literal("增加速度")))
                 .build());
         button_speed_sub = this.addRenderableWidget(Button.builder(Component.literal("-"), (button) -> {
@@ -93,9 +94,19 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                         this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_BEDROCK_ID);
                     }
                 })
-                .bounds(button_direction.getX() + 60, button_direction.getY(), 18, 18)
+                .bounds(x + 65, y + 93, 18, 18)
                 .tooltip(Tooltip.create(Component.literal("是否破基岩")))
                 .build());
+
+        button_is_placing = this.addRenderableWidget(Button.builder(Component.literal("放置模式"), (button) -> {
+                    if (this.minecraft != null && this.minecraft.gameMode != null) {
+                        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_IS_PLACING_ID);
+                    }
+                })
+                .bounds(x + 65, y + 115, 18, 18)
+                .tooltip(Tooltip.create(Component.literal("是否为放置模式")))
+                .build());
+
     }
 
     @Override
@@ -132,6 +143,9 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
         guiGraphics.drawString(this.font, "破基岩：",
                 button_bedrock.getX() - this.leftPos - 34, button_bedrock.getY() - this.topPos + 5,4210752, false);
 
+        guiGraphics.drawString(this.font, "放置模式：",
+                button_is_placing.getX() - this.leftPos - 43, button_is_placing.getY() - this.topPos + 5,4210752, false);
+
         if (mouseX >= this.leftPos + 45 && mouseX <= this.leftPos + 65 && mouseY >= this.topPos && mouseY <= this.topPos + 20) {
             List<Component> tooltipLines = List.of(
                     Component.literal("此机器用于区块清除与地形平整"),
@@ -158,6 +172,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
         button_speed_sub.active = menu.blockEntity.opsPerTick > 5;
 
         button_bedrock.setMessage(Component.literal(menu.blockEntity.canDestroyBedrock ? "✓" : "×"));
+        button_is_placing.setMessage(Component.literal(menu.blockEntity.isPlacing ? "✓" : "×"));
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
