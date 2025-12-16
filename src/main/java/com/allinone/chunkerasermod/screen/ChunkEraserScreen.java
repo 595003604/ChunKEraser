@@ -12,6 +12,8 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
 
 import java.util.List;
 
@@ -44,7 +46,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                         this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_ACTIVE_ID);
                     }
                 })
-                .bounds(x + 120, y + 115, 80, 40)
+                .bounds(x + 110, y + 115, 80, 40)
                 .build());
 
         button_direction = this.addRenderableWidget(Button.builder(Component.literal("方向"), (button) -> {
@@ -180,5 +182,20 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
         button_is_placing.setMessage(Component.literal(menu.blockEntity.isPlacing ? "✓" : "×"));
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        // 获取鼠标下的槽位
+        Slot slot = this.getSlotUnderMouse();
+
+        // 只有当：按住Shift + 鼠标左键(0) + 鼠标下有槽位 + 槽位里有东西
+        if (slot != null && hasShiftDown() && button == 0 && slot.hasItem()) {
+            // 模拟发送一次 Quick Move (Shift+点击) 的包给服务器
+            this.minecraft.gameMode.handleInventoryMouseClick(this.menu.containerId, slot.index, 0, ClickType.QUICK_MOVE, this.minecraft.player);
+            // 这里不返回 true，允许后续逻辑继续处理（虽然通常这样就够了）
+        }
+
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 }

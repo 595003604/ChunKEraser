@@ -1,5 +1,6 @@
 package com.allinone.chunkerasermod.entity;
 
+import com.allinone.chunkerasermod.ChunkEraser;
 import com.allinone.chunkerasermod.block.ChunkEraserBlock;
 import com.allinone.chunkerasermod.screen.ChunkEraserMenu;
 import net.minecraft.core.BlockPos;
@@ -11,7 +12,6 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -25,10 +25,15 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import javax.annotation.Nullable;
 
+@EventBusSubscriber(modid = ChunkEraser.MODID)
 public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider {
     public int opsPerTick = 30;
     public int range = 4;
@@ -341,5 +346,12 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     @Override
     public @org.jetbrains.annotations.Nullable AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
         return new ChunkEraserMenu(containerId, playerInventory, this);
+    }
+
+    @SubscribeEvent
+    public static void registerCapabilities(final RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK,
+                ModEntities.CHUNK_ERASER_BE.get(),
+                (be, context) -> be.itemStackHandler);
     }
 }
