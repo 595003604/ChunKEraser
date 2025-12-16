@@ -109,7 +109,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                     }
                 })
                 .bounds(x + 65, y + 115, 18, 18)
-                .tooltip(Tooltip.create(Component.literal("是否为放置模式，此模式下机器将在机器上方或下方放置一层方块")))
+                .tooltip(Tooltip.create(Component.literal("是否为放置模式，此模式下机器会上方或下方放置一层方块")))
                 .build());
 
         button_placing_block = this.addRenderableWidget(Button.builder(Component.literal(""), (button) -> {
