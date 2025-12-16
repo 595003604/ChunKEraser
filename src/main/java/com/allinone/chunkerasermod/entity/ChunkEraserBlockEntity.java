@@ -55,6 +55,13 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     private int currentZ;
 
     public final ItemStackHandler itemStackHandler = new ItemStackHandler(1) {
+        // 【关键修复】这是对外宣告的上限，漏斗和管道会检查这个值
+        @Override
+        public int getSlotLimit(int slot) {
+            return Integer.MAX_VALUE;
+        }
+
+
         @Override
         protected int getStackLimit(int slot, ItemStack stack) {
             return Integer.MAX_VALUE;
