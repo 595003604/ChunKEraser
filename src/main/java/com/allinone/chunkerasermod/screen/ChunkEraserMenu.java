@@ -1,15 +1,12 @@
 package com.allinone.chunkerasermod.screen;
 
 import com.allinone.chunkerasermod.entity.ChunkEraserBlockEntity;
-import com.allinone.chunkerasermod.util.TabSlot;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.items.SlotItemHandler;
 
 public class ChunkEraserMenu extends AbstractContainerMenu {
     public static final int BUTTON_ACTIVE_ID = 0;
@@ -20,6 +17,7 @@ public class ChunkEraserMenu extends AbstractContainerMenu {
     public static final int BUTTON_SPEED_SUB_ID = 5;
     public static final int BUTTON_BEDROCK_ID = 6;
     public static final int BUTTON_IS_PLACING_ID = 7;
+    public static final int BUTTON_PLACING_BLOCK_ID = 8;
 
     public final Level level;
     public final ChunkEraserBlockEntity blockEntity;
@@ -31,21 +29,6 @@ public class ChunkEraserMenu extends AbstractContainerMenu {
         super(ModMenus.CHUNK_ERASER.get(), containerId);
         this.level = playerInventory.player.level();
         this.blockEntity = blockEntity;
-
-        this.addSlot(new TabSlot(blockEntity.itemStackHandler, 0, 66, 138, this, 0) {
-            @Override
-            public int getMaxStackSize(ItemStack stack) {
-                return Integer.MAX_VALUE;
-            }
-            @Override
-            public int getMaxStackSize() {
-                return Integer.MAX_VALUE;
-            }
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof BlockItem;
-            }
-        });
 
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
@@ -91,45 +74,17 @@ public class ChunkEraserMenu extends AbstractContainerMenu {
             blockEntity.changeIsPlacing();
             return true;
         }
+        if (id == BUTTON_PLACING_BLOCK_ID) {
+            blockEntity.changePlacingBlock();
+            return true;
+        }
         return super.clickMenuButton(player, id);
     }
 
-    private static final int HOTBAR_SLOT_COUNT = 9;
-    private static final int PLAYER_INVENTORY_ROW_COUNT = 3;
-    private static final int PLAYER_INVENTORY_COLUMN_COUNT = 9;
-    private static final int PLAYER_INVENTORY_SLOT_COUNT = PLAYER_INVENTORY_COLUMN_COUNT * PLAYER_INVENTORY_ROW_COUNT;
-    private static final int VANILLA_SLOT_COUNT = HOTBAR_SLOT_COUNT + PLAYER_INVENTORY_SLOT_COUNT;
-    private static final int TE_INVENTORY_FIRST_SLOT_INDEX = 0;
 
-    private static final int TE_INVENTORY_SLOT_COUNT = 1;  // must be the number of slots you have!
-    private static final int VANILLA_FIRST_SLOT_INDEX = TE_INVENTORY_SLOT_COUNT;
     @Override
     public ItemStack quickMoveStack(Player player, int quickMoveSlotIndex) {
-        Slot sourceSlot = slots.get(quickMoveSlotIndex);
-        if (sourceSlot == null || !sourceSlot.hasItem()) return ItemStack.EMPTY;  //EMPTY_ITEM
-        ItemStack sourceStack = sourceSlot.getItem();
-        ItemStack copyOfSourceStack = sourceStack.copy();
-
-        if (quickMoveSlotIndex < TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT) {
-            if (!moveItemStackTo(sourceStack, VANILLA_FIRST_SLOT_INDEX, VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT, false)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (quickMoveSlotIndex < VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT) {
-            if (!moveItemStackTo(sourceStack, TE_INVENTORY_FIRST_SLOT_INDEX, TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT, false)) {
-                return ItemStack.EMPTY;
-            }
-        } else {
-            System.out.println("Invalid slotIndex:" + quickMoveSlotIndex);
-            return ItemStack.EMPTY;
-        }
-
-        if (sourceStack.getCount() == 0) {
-            sourceSlot.set(ItemStack.EMPTY);
-        } else {
-            sourceSlot.setChanged();
-        }
-        sourceSlot.onTake(player, sourceStack);
-        return copyOfSourceStack;
+        return ItemStack.EMPTY;
     }
 
     @Override

@@ -1,49 +1,34 @@
 package com.allinone.chunkerasermod.entity;
 
-import com.allinone.chunkerasermod.ChunkEraser;
 import com.allinone.chunkerasermod.block.ChunkEraserBlock;
 import com.allinone.chunkerasermod.screen.ChunkEraserMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.ItemStackHandler;
+
 
 import javax.annotation.Nullable;
 
-@EventBusSubscriber(modid = ChunkEraser.MODID)
 public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider {
     public int opsPerTick = 30;
     public int range = 4;
     public boolean workDirection = true;
     public boolean canDestroyBedrock = false;
     public boolean isPlacing = false;
-
-    public Item storedItem = Items.AIR;
-    public Item placingItem = Items.AIR;
-    public int storedCount = 0;
+    public boolean placingBlock = false;
 
     private BlockPos.MutableBlockPos currentPos = new BlockPos.MutableBlockPos();
     private final ChunkPos chunkPos;
@@ -54,32 +39,6 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     private int currentY;
     private int currentZ;
 
-    public final ItemStackHandler itemStackHandler = new ItemStackHandler(1) {
-        // 【关键修复】这是对外宣告的上限，漏斗和管道会检查这个值
-        @Override
-        public int getSlotLimit(int slot) {
-            return Integer.MAX_VALUE;
-        }
-
-
-        @Override
-        protected int getStackLimit(int slot, ItemStack stack) {
-            return Integer.MAX_VALUE;
-        }
-
-        @Override
-        public boolean isItemValid(int slot, ItemStack stack) {
-            return stack.getItem() instanceof BlockItem;
-        }
-
-        @Override
-        protected void onContentsChanged(int slot) {
-            storedItem = itemStackHandler.getStackInSlot(0).getItem();
-            storedCount = itemStackHandler.getStackInSlot(0).getCount();
-            setChangedAndSendBlockUpdated();
-        }
-    };
-
     public ChunkEraserBlockEntity(BlockPos pos, BlockState blockState) {
         super(ModEntities.CHUNK_ERASER_BE.get(), pos, blockState);
         this.chunkPos = new ChunkPos(pos);
@@ -87,8 +46,6 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
         this.chunkZ = chunkPos.getMinBlockZ();
         this.MachineY = pos.getY();
         resetCursor();
-
-        // itemStackHandler.setStackInSlot(0, new ItemStack(Items.STONE, Integer.MAX_VALUE));
     }
 
     public void cycleActive() {
@@ -96,15 +53,6 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
             if (!isPlacing) {
                 level.setBlockAndUpdate(getBlockPos(), this.getBlockState().cycle(ChunkEraserBlock.ACTIVE));
             } else {
-                 // 模拟提取只会得到64的stack
-                 int blockToPlacing = 256 * (range * 2 + 1) * (range * 2 + 1);
-                 if (storedCount < blockToPlacing) {
-                     sendMsgToNearestPlayer("方块数量不足以填满设定范围（需 " + blockToPlacing + " 个）");
-                     return;
-                 }
-                 placingItem = storedItem;
-                 itemStackHandler.setStackInSlot(0, new ItemStack(storedItem, storedCount - blockToPlacing));
-                level.setBlockAndUpdate(getBlockPos(), this.getBlockState().cycle(ChunkEraserBlock.ACTIVE));
             }
         }
     }
@@ -150,6 +98,14 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     public void changeIsPlacing() {
         if (level != null && !level.isClientSide) {
             isPlacing = !isPlacing;
+            resetCursor();
+            level.setBlockAndUpdate(getBlockPos(), this.getBlockState().setValue(ChunkEraserBlock.ACTIVE, false));
+            setChangedAndSendBlockUpdated();
+        }
+    }
+    public void changePlacingBlock() {
+        if (level != null && !level.isClientSide) {
+            placingBlock = !placingBlock;
             resetCursor();
             level.setBlockAndUpdate(getBlockPos(), this.getBlockState().setValue(ChunkEraserBlock.ACTIVE, false));
             setChangedAndSendBlockUpdated();
@@ -260,8 +216,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
 
     private void placing(BlockPos.MutableBlockPos currentPos) {
         if (level == null || !level.isLoaded(currentPos)) return;
-        if (!(placingItem instanceof BlockItem blockItem)) return;
-        level.setBlock(currentPos, blockItem.getBlock().defaultBlockState(), 18);
+        level.setBlock(currentPos, placingBlock ? Blocks.STONE.defaultBlockState() : Blocks.SMOOTH_STONE.defaultBlockState(), 18);
     }
 
     private void sendMsgToNearestPlayer(String msg) {
@@ -283,16 +238,8 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
         tag.putBoolean("workDirection", workDirection);
         tag.putBoolean("canDestroyBedrock", canDestroyBedrock);
         tag.putBoolean("isPlacing", isPlacing);
-        if (!itemStackHandler.getStackInSlot(0).isEmpty()) {
-            storedItem = itemStackHandler.getStackInSlot(0).getItem();
-            storedCount = itemStackHandler.getStackInSlot(0).getCount();
-            String itemKey = BuiltInRegistries.ITEM.getKey(this.storedItem).toString();
-            tag.putString("StoredItemType", itemKey);
-            tag.putInt("StoredItemCount", this.storedCount);
-        }
-        if (isPlacing && placingItem != Items.AIR) {
-            tag.putString("PlacingItemType", BuiltInRegistries.ITEM.getKey(placingItem).toString());
-        }
+        tag.putBoolean("placingBlock", placingBlock);
+
     }
 
     @Override
@@ -307,30 +254,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
             workDirection = tag.getBoolean("workDirection");
             canDestroyBedrock = tag.getBoolean("canDestroyBedrock");
             isPlacing = tag.getBoolean("isPlacing");
-
-            if (tag.contains("StoredItemType")) {
-                // 1. 读取注册名并转回 Item 对象
-                String itemKey = tag.getString("StoredItemType");
-                ResourceLocation rl = ResourceLocation.tryParse(itemKey);
-
-                if (rl != null) {
-                    this.storedItem = BuiltInRegistries.ITEM.get(rl);
-                } else {
-                    this.storedItem = Items.AIR; // 防止空指针或错误
-                }
-
-                // 2. 读取数量
-                this.storedCount = tag.getInt("StoredItemCount");
-
-                itemStackHandler.setStackInSlot(0, new ItemStack(storedItem, storedCount));
-            }
-
-            if (tag.contains("PlacingItemType")) {
-                ResourceLocation rl = ResourceLocation.tryParse(tag.getString("PlacingItemType"));
-                if (rl != null) {
-                    this.placingItem = BuiltInRegistries.ITEM.get(rl);
-                }
-            }
+            placingBlock = tag.getBoolean("placingBlock");
         }
     }
 
@@ -355,10 +279,4 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
         return new ChunkEraserMenu(containerId, playerInventory, this);
     }
 
-    @SubscribeEvent
-    public static void registerCapabilities(final RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK,
-                ModEntities.CHUNK_ERASER_BE.get(),
-                (be, context) -> be.itemStackHandler);
-    }
 }
