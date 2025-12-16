@@ -24,6 +24,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
     private Button button_range_sub;
     private Button button_speed_add;
     private Button button_speed_sub;
+    private Button button_bedrock;
 
     public ChunkEraserScreen(ChunkEraserMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -86,6 +87,15 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                 .bounds(button_speed_add.getX(), button_speed_add.getY() + 10, 18, 9)
                 .tooltip(Tooltip.create(Component.literal("减少速度")))
                 .build());
+
+        button_bedrock = this.addRenderableWidget(Button.builder(Component.literal("破基岩"), (button) -> {
+                    if (this.minecraft != null && this.minecraft.gameMode != null) {
+                        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_BEDROCK_ID);
+                    }
+                })
+                .bounds(button_direction.getX() + 60, button_direction.getY(), 18, 18)
+                .tooltip(Tooltip.create(Component.literal("是否破基岩")))
+                .build());
     }
 
     @Override
@@ -119,6 +129,9 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
         guiGraphics.drawString(this.font,  (menu.blockEntity.opsPerTick) + " (" + (menu.blockEntity.opsPerTick) * (menu.blockEntity.range * 2 + 1) * (menu.blockEntity.range * 2 + 1)  + "方块/tick)",
                 button_speed_add.getX() - this.leftPos + 25, button_speed_add.getY() - this.topPos + 5,4210752, false);
 
+        guiGraphics.drawString(this.font, "破基岩：",
+                button_bedrock.getX() - this.leftPos - 34, button_bedrock.getY() - this.topPos + 5,4210752, false);
+
         if (mouseX >= this.leftPos + 45 && mouseX <= this.leftPos + 65 && mouseY >= this.topPos && mouseY <= this.topPos + 20) {
             List<Component> tooltipLines = List.of(
                     Component.literal("此机器用于区块清除与地形平整"),
@@ -143,6 +156,8 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
 
         button_speed_add.active = menu.blockEntity.opsPerTick < 120;
         button_speed_sub.active = menu.blockEntity.opsPerTick > 5;
+
+        button_bedrock.setMessage(Component.literal(menu.blockEntity.canDestroyBedrock ? "✓" : "×"));
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }

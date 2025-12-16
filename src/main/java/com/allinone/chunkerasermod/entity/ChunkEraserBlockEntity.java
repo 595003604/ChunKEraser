@@ -25,6 +25,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     public int opsPerTick = 30;
     public int range = 4;
     public boolean workDirection = true;
+    public boolean canDestroyBedrock = false;
 
     private BlockPos.MutableBlockPos currentPos = new BlockPos.MutableBlockPos();
     private final ChunkPos chunkPos;
@@ -86,6 +87,13 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
                 //resetCursor();
                 setChangedAndSendBlockUpdated();
             }
+        }
+    }
+
+    public void changeCanDestroyBedrock() {
+        if (level != null && !level.isClientSide) {
+            canDestroyBedrock = !canDestroyBedrock;
+            setChangedAndSendBlockUpdated();
         }
     }
 
@@ -154,7 +162,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     private void mining(BlockPos.MutableBlockPos currentPos) {
         if (level != null && !level.isLoaded(currentPos)) return;
         BlockState blockState = level.getBlockState(currentPos);
-        if (!blockState.isAir() && blockState.getDestroySpeed(level, currentPos) >= 0) {
+        if (!blockState.isAir() && (canDestroyBedrock || blockState.getDestroySpeed(level, currentPos) >= 0)) {
             // getDestroySpeed返回的是硬度，基岩为-1，草为0， 流体为100
             level.setBlock(currentPos, Blocks.AIR.defaultBlockState(), 18); // 通知客户端不通知邻居
         }
@@ -169,6 +177,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
         tag.putInt("range", range);
         tag.putInt("opsPerTick", opsPerTick);
         tag.putBoolean("workDirection", workDirection);
+        tag.putBoolean("canDestroyBedrock", canDestroyBedrock);
     }
 
     @Override
@@ -181,6 +190,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
             range = tag.getInt("range");
             opsPerTick = tag.getInt("opsPerTick");
             workDirection = tag.getBoolean("workDirection");
+            canDestroyBedrock = tag.getBoolean("canDestroyBedrock");
         }
     }
 
