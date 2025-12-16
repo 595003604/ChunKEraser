@@ -201,7 +201,9 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
             for (int chunkOffsetX = -range; chunkOffsetX <= range; chunkOffsetX++) {
                 for (int chunkOffsetZ = -range; chunkOffsetZ <= range; chunkOffsetZ++) {
                     currentPos.set(currentX + chunkX + chunkOffsetX * 16, currentY, currentZ + chunkZ + chunkOffsetZ * 16);
-                    placing(currentPos);
+                    if (!currentPos.equals(this.getBlockPos())) {
+                        placing(currentPos);
+                    }
                 }
             }
 
@@ -236,7 +238,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     }
 
     private void mining(BlockPos.MutableBlockPos currentPos) {
-        if (level != null && !level.isLoaded(currentPos)) return;
+        if (level == null || !level.isLoaded(currentPos)) return;
         BlockState blockState = level.getBlockState(currentPos);
         if (!blockState.isAir() && (canDestroyBedrock || blockState.getDestroySpeed(level, currentPos) >= 0)) {
             // getDestroySpeed返回的是硬度，基岩为-1，草为0， 流体为100
@@ -245,12 +247,9 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     }
 
     private void placing(BlockPos.MutableBlockPos currentPos) {
-        if (level != null && !level.isLoaded(currentPos)) return;
+        if (level == null || !level.isLoaded(currentPos)) return;
         if (!(placingItem instanceof BlockItem blockItem)) return;
-
-        if (level != null && (canDestroyBedrock || level.getBlockState(currentPos).getDestroySpeed(level, currentPos) >= 0)) {
-            level.setBlock(currentPos, blockItem.getBlock().defaultBlockState(), 18);
-        }
+        level.setBlock(currentPos, blockItem.getBlock().defaultBlockState(), 18);
     }
 
     private void sendMsgToNearestPlayer(String msg) {
@@ -278,6 +277,9 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
             String itemKey = BuiltInRegistries.ITEM.getKey(this.storedItem).toString();
             tag.putString("StoredItemType", itemKey);
             tag.putInt("StoredItemCount", this.storedCount);
+        }
+        if (isPlacing && placingItem != Items.AIR) {
+            tag.putString("PlacingItemType", BuiltInRegistries.ITEM.getKey(placingItem).toString());
         }
     }
 
@@ -309,6 +311,13 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
                 this.storedCount = tag.getInt("StoredItemCount");
 
                 itemStackHandler.setStackInSlot(0, new ItemStack(storedItem, storedCount));
+            }
+
+            if (tag.contains("PlacingItemType")) {
+                ResourceLocation rl = ResourceLocation.tryParse(tag.getString("PlacingItemType"));
+                if (rl != null) {
+                    this.placingItem = BuiltInRegistries.ITEM.get(rl);
+                }
             }
         }
     }

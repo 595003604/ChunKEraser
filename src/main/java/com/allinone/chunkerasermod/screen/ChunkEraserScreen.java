@@ -104,7 +104,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                     }
                 })
                 .bounds(x + 65, y + 115, 18, 18)
-                .tooltip(Tooltip.create(Component.literal("是否为放置模式")))
+                .tooltip(Tooltip.create(Component.literal("是否为放置方块模式，此模式下机器将在机器上方或下方放置一层方块")))
                 .build());
 
     }
@@ -146,13 +146,17 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
         guiGraphics.drawString(this.font, "放置模式：",
                 button_is_placing.getX() - this.leftPos - 43, button_is_placing.getY() - this.topPos + 5,4210752, false);
 
+        guiGraphics.drawString(this.font, "储存方块：",
+                button_is_placing.getX() - this.leftPos - 43, button_is_placing.getY() - this.topPos + 28,4210752, false);
+
         if (mouseX >= this.leftPos + 45 && mouseX <= this.leftPos + 65 && mouseY >= this.topPos && mouseY <= this.topPos + 20) {
             List<Component> tooltipLines = List.of(
                     Component.literal("此机器用于区块清除与地形平整"),
                     Component.literal("清除地形时不会掉落物品，请检查目标区域是否有重要建筑").withStyle(ChatFormatting.RED),
                     Component.literal("清除时会跳过未加载的方块，请确认区块已加载").withStyle(ChatFormatting.GRAY),
                     Component.literal("工作中改变方向和范围设置，会重置清除进度").withStyle(ChatFormatting.GRAY),
-                    Component.literal("当运行到世界高度上下限时，机器会自动停止").withStyle(ChatFormatting.GRAY)
+                    Component.literal("当运行到世界高度上下限时，机器会自动停止").withStyle(ChatFormatting.GRAY),
+                    Component.literal("放置方块模式下，机器将消耗储存方块，在设置方向上放置一层方块").withStyle(ChatFormatting.GRAY)
             );
             guiGraphics.renderComponentTooltip(this.font, tooltipLines, mouseX - this.leftPos , mouseY - this.topPos);
         }
