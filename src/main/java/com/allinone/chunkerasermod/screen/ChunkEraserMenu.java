@@ -32,7 +32,7 @@ public class ChunkEraserMenu extends AbstractContainerMenu {
         this.level = playerInventory.player.level();
         this.blockEntity = blockEntity;
 
-        this.addSlot(new TabSlot(blockEntity.itemStackHandler, 0, 80, 35, this, 0) {
+        this.addSlot(new TabSlot(blockEntity.itemStackHandler, 0, 66, 138, this, 0) {
             @Override
             public int getMaxStackSize(ItemStack stack) {
                 return Integer.MAX_VALUE;
@@ -49,13 +49,13 @@ public class ChunkEraserMenu extends AbstractContainerMenu {
 
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
-                this.addSlot(new Slot(playerInventory, col + row * 9 + 9, 45 + col * 18, 170 + row * 18));
+                this.addSlot(new Slot(playerInventory, col + row * 9 + 9, 30 + col * 18, 170 + row * 18));
             }
         }
 
         // 3. 添加玩家快捷栏槽位（标准位置：x=8, y=142；共9个）
         for (int col = 0; col < 9; ++col) {
-            this.addSlot(new Slot(playerInventory, col, 45 + col * 18, 228));
+            this.addSlot(new Slot(playerInventory, col, 30 + col * 18, 228));
         }
     }
 
@@ -94,9 +94,42 @@ public class ChunkEraserMenu extends AbstractContainerMenu {
         return super.clickMenuButton(player, id);
     }
 
+    private static final int HOTBAR_SLOT_COUNT = 9;
+    private static final int PLAYER_INVENTORY_ROW_COUNT = 3;
+    private static final int PLAYER_INVENTORY_COLUMN_COUNT = 9;
+    private static final int PLAYER_INVENTORY_SLOT_COUNT = PLAYER_INVENTORY_COLUMN_COUNT * PLAYER_INVENTORY_ROW_COUNT;
+    private static final int VANILLA_SLOT_COUNT = HOTBAR_SLOT_COUNT + PLAYER_INVENTORY_SLOT_COUNT;
+    private static final int TE_INVENTORY_FIRST_SLOT_INDEX = 0;
+
+    private static final int TE_INVENTORY_SLOT_COUNT = 1;  // must be the number of slots you have!
+    private static final int VANILLA_FIRST_SLOT_INDEX = TE_INVENTORY_SLOT_COUNT;
     @Override
-    public ItemStack quickMoveStack(Player player, int i) {
-        return ItemStack.EMPTY;
+    public ItemStack quickMoveStack(Player player, int quickMoveSlotIndex) {
+        Slot sourceSlot = slots.get(quickMoveSlotIndex);
+        if (sourceSlot == null || !sourceSlot.hasItem()) return ItemStack.EMPTY;  //EMPTY_ITEM
+        ItemStack sourceStack = sourceSlot.getItem();
+        ItemStack copyOfSourceStack = sourceStack.copy();
+
+        if (quickMoveSlotIndex < TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT) {
+            if (!moveItemStackTo(sourceStack, VANILLA_FIRST_SLOT_INDEX, VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT, false)) {
+                return ItemStack.EMPTY;
+            }
+        } else if (quickMoveSlotIndex < VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT) {
+            if (!moveItemStackTo(sourceStack, TE_INVENTORY_FIRST_SLOT_INDEX, TE_INVENTORY_FIRST_SLOT_INDEX + TE_INVENTORY_SLOT_COUNT, false)) {
+                return ItemStack.EMPTY;
+            }
+        } else {
+            System.out.println("Invalid slotIndex:" + quickMoveSlotIndex);
+            return ItemStack.EMPTY;
+        }
+
+        if (sourceStack.getCount() == 0) {
+            sourceSlot.set(ItemStack.EMPTY);
+        } else {
+            sourceSlot.setChanged();
+        }
+        sourceSlot.onTake(player, sourceStack);
+        return copyOfSourceStack;
     }
 
     @Override

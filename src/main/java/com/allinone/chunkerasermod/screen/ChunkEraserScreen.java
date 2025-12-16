@@ -29,7 +29,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
 
     public ChunkEraserScreen(ChunkEraserMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageWidth = 256;
+        this.imageWidth = 223;
         this.imageHeight = 256;
     }
 
@@ -44,7 +44,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                         this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_ACTIVE_ID);
                     }
                 })
-                .bounds(x + 160, y + 100, 40, 40)
+                .bounds(x + 120, y + 115, 80, 40)
                 .build());
 
         button_direction = this.addRenderableWidget(Button.builder(Component.literal("方向"), (button) -> {
@@ -160,6 +160,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
         button_active.setTooltip(Tooltip.create(Component.literal(menu.blockEntity.getBlockState().getValue(ChunkEraserBlock.ACTIVE) ? "工作中~点击停止" : "点击启动机器")));
 
         button_direction.setTooltip(Tooltip.create(Component.literal(menu.blockEntity.workDirection ? "清除机器下方区域，直至基岩层" : "清除机器上方区域，直至高度上限")));

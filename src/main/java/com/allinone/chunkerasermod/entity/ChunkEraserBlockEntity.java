@@ -35,9 +35,9 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     public boolean workDirection = true;
     public boolean canDestroyBedrock = false;
     public boolean isPlacing = false;
-    public boolean inventoryChanged = false;
 
     public Item storedItem = Items.AIR;
+    public Item placingItem = Items.AIR;
     public int storedCount = 0;
 
     private BlockPos.MutableBlockPos currentPos = new BlockPos.MutableBlockPos();
@@ -64,9 +64,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
         protected void onContentsChanged(int slot) {
             storedItem = itemStackHandler.getStackInSlot(0).getItem();
             storedCount = itemStackHandler.getStackInSlot(0).getCount();
-            setChanged();
-            inventoryChanged = true;
-            // setChangedAndSendBlockUpdated(); // 发包占用性能
+            setChangedAndSendBlockUpdated();
         }
     };
 
@@ -78,7 +76,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
         this.MachineY = pos.getY();
         resetCursor();
 
-        itemStackHandler.setStackInSlot(0, new ItemStack(Items.STONE, Integer.MAX_VALUE));
+        // itemStackHandler.setStackInSlot(0, new ItemStack(Items.STONE, Integer.MAX_VALUE));
     }
 
     public void cycleActive() {
@@ -86,12 +84,14 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
             if (!isPlacing) {
                 level.setBlockAndUpdate(getBlockPos(), this.getBlockState().cycle(ChunkEraserBlock.ACTIVE));
             } else {
-                 int blockRemaining = itemStackHandler.getStackInSlot(0).getCount(); // 模拟提取只会得到64的stack
+                 // 模拟提取只会得到64的stack
                  int blockToPlacing = 256 * (range * 2 + 1) * (range * 2 + 1);
-                 if (blockRemaining < blockToPlacing) {
+                 if (storedCount < blockToPlacing) {
                      sendMsgToNearestPlayer("方块数量不足以填满设定范围（需 " + blockToPlacing + " 个）");
                      return;
                  }
+                 placingItem = storedItem;
+                 itemStackHandler.setStackInSlot(0, new ItemStack(storedItem, storedCount - blockToPlacing));
                 level.setBlockAndUpdate(getBlockPos(), this.getBlockState().cycle(ChunkEraserBlock.ACTIVE));
             }
         }
@@ -160,9 +160,6 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     public static void tickServer(Level level, BlockPos blockPos, BlockState blockState, ChunkEraserBlockEntity blockEntity) {
         if (level.isClientSide) return;
 
-        // 每个tick重置变化标记
-        blockEntity.inventoryChanged = false;
-
         if (blockState.getValue(ChunkEraserBlock.ACTIVE)) {
             if (!blockEntity.isPlacing) {
                 blockEntity.processChunkMining();
@@ -170,17 +167,14 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
                 blockEntity.processChunkPlacing();
             }
         }
-
-        if (blockEntity.inventoryChanged) {
-            blockEntity.setChangedAndSendBlockUpdated();
-        }
     }
 
     public void processChunkMining() {
         for (int i = 0; i < opsPerTick; i++) {
             if (currentY < -64 || currentY > 319) {
-                cycleActive();
-                return;
+                // sendMsgToNearestPlayer("test");
+                level.setBlockAndUpdate(getBlockPos(), this.getBlockState().setValue(ChunkEraserBlock.ACTIVE, false));
+                break;
             }
 
             for (int chunkOffsetX = -range; chunkOffsetX <= range; chunkOffsetX++) {
@@ -196,21 +190,18 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
 
     public void processChunkPlacing() {
         for (int i = 0; i < opsPerTick; i++) {
-            if (currentY < MachineY - 1 || currentY > MachineY + 1 || itemStackHandler.getStackInSlot(0).isEmpty()) {
-                cycleActive();
-                return;
+            if (currentY < MachineY - 1 || currentY > MachineY + 1 ) {
+                if (level != null) {
+                    // sendMsgToNearestPlayer("test");
+                    level.setBlockAndUpdate(getBlockPos(), this.getBlockState().setValue(ChunkEraserBlock.ACTIVE, false));
+                }
+                break;
             }
 
             for (int chunkOffsetX = -range; chunkOffsetX <= range; chunkOffsetX++) {
                 for (int chunkOffsetZ = -range; chunkOffsetZ <= range; chunkOffsetZ++) {
                     currentPos.set(currentX + chunkX + chunkOffsetX * 16, currentY, currentZ + chunkZ + chunkOffsetZ * 16);
-                    boolean hasItemsLeft = placing(currentPos);
-
-                    if (!hasItemsLeft) {
-                        cycleActive(); // 没方块了，停机
-                        sendMsgToNearestPlayer("方块耗尽，机器停止");
-                        return;
-                        }
+                    placing(currentPos);
                 }
             }
 
@@ -253,25 +244,13 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
         }
     }
 
-    private boolean placing(BlockPos.MutableBlockPos currentPos) {
-        if (level != null && !level.isLoaded(currentPos)) return true;
-        ItemStack stack = itemStackHandler.getStackInSlot(0);
-        if (stack.isEmpty()) return false;
-        if (!(stack.getItem() instanceof BlockItem blockItem)) return false;
+    private void placing(BlockPos.MutableBlockPos currentPos) {
+        if (level != null && !level.isLoaded(currentPos)) return;
+        if (!(placingItem instanceof BlockItem blockItem)) return;
 
-        BlockState targetState = level.getBlockState(currentPos);
-        BlockState newState = blockItem.getBlock().defaultBlockState();
-        if (targetState.is(newState.getBlock())) {
-            return true;
+        if (level != null && (canDestroyBedrock || level.getBlockState(currentPos).getDestroySpeed(level, currentPos) >= 0)) {
+            level.setBlock(currentPos, blockItem.getBlock().defaultBlockState(), 18);
         }
-
-        if (canDestroyBedrock || targetState.getDestroySpeed(level, currentPos) >= 0) {
-            boolean success = level.setBlock(currentPos, newState, 18);
-            if (success) {
-                itemStackHandler.extractItem(0, 1, false);
-            }
-        }
-        return true;
     }
 
     private void sendMsgToNearestPlayer(String msg) {
