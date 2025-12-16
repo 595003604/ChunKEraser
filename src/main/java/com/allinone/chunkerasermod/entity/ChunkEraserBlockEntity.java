@@ -50,10 +50,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
 
     public void cycleActive() {
         if (level != null && !level.isClientSide) {
-            if (!isPlacing) {
                 level.setBlockAndUpdate(getBlockPos(), this.getBlockState().cycle(ChunkEraserBlock.ACTIVE));
-            } else {
-            }
         }
     }
 
@@ -170,6 +167,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
                 for (int chunkOffsetZ = -range; chunkOffsetZ <= range; chunkOffsetZ++) {
                     currentPos.set(currentX + chunkX + chunkOffsetX * 16, currentY, currentZ + chunkZ + chunkOffsetZ * 16);
                     if (!currentPos.equals(this.getBlockPos())) {
+                        // sendMsgToNearestPlayer("test");
                         placing(currentPos);
                     }
                 }

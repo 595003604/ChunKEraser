@@ -109,7 +109,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                     }
                 })
                 .bounds(x + 65, y + 115, 18, 18)
-                .tooltip(Tooltip.create(Component.literal("是否为放置方块模式，此模式下机器将在机器上方或下方放置一层方块")))
+                .tooltip(Tooltip.create(Component.literal("是否为放置模式，此模式下机器将在机器上方或下方放置一层方块")))
                 .build());
 
         button_placing_block = this.addRenderableWidget(Button.builder(Component.literal(""), (button) -> {
@@ -117,7 +117,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
                         this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, ChunkEraserMenu.BUTTON_PLACING_BLOCK_ID);
                     }
                 })
-                .bounds(x + 65, y + 127, 18, 18)
+                .bounds(x + 65, y + 137, 18, 18)
                 .tooltip(Tooltip.create(Component.literal("选择放置的方块")))
                 .build());
 
@@ -191,7 +191,7 @@ public class ChunkEraserScreen extends AbstractContainerScreen<ChunkEraserMenu>{
         button_bedrock.setMessage(Component.literal(menu.blockEntity.canDestroyBedrock ? "✓" : "×"));
         button_is_placing.setMessage(Component.literal(menu.blockEntity.isPlacing ? "✓" : "×"));
 
-        guiGraphics.renderItem(new ItemStack(Items.SMOOTH_STONE, 1), 200, 100);
+        guiGraphics.renderItem(new ItemStack(menu.blockEntity.placingBlock ? Items.STONE : Items.SMOOTH_STONE, 1), button_placing_block.getX() + 1, button_placing_block.getY() + 1);
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
