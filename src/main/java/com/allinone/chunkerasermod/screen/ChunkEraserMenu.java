@@ -16,6 +16,7 @@ public class ChunkEraserMenu extends AbstractContainerMenu {
     public static final int BUTTON_SPEED_ADD_ID = 4;
     public static final int BUTTON_SPEED_SUB_ID = 5;
     public static final int BUTTON_BEDROCK_ID = 6;
+    public static final int BUTTON_IS_PLACING_ID = 7;
 
     public final Level level;
     public final ChunkEraserBlockEntity blockEntity;
@@ -53,6 +54,10 @@ public class ChunkEraserMenu extends AbstractContainerMenu {
         }
         if (id == BUTTON_BEDROCK_ID) {
             blockEntity.changeCanDestroyBedrock();
+            return true;
+        }
+        if (id == BUTTON_IS_PLACING_ID) {
+            blockEntity.changeIsPlacing();
             return true;
         }
         return super.clickMenuButton(player, id);

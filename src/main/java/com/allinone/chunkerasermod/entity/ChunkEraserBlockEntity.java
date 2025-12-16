@@ -35,6 +35,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     public boolean workDirection = true;
     public boolean canDestroyBedrock = false;
     public boolean isPlacing = false;
+    public boolean inventoryChanged = false;
 
     public Item storedItem = Items.AIR;
     public int storedCount = 0;
@@ -63,7 +64,9 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
         protected void onContentsChanged(int slot) {
             storedItem = itemStackHandler.getStackInSlot(0).getItem();
             storedCount = itemStackHandler.getStackInSlot(0).getCount();
-            setChangedAndSendBlockUpdated();
+            setChanged();
+            inventoryChanged = true;
+            // setChangedAndSendBlockUpdated(); // 发包占用性能
         }
     };
 
@@ -75,7 +78,7 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
         this.MachineY = pos.getY();
         resetCursor();
 
-        itemStackHandler.setStackInSlot(0, new ItemStack(Items.STONE, Integer.MAX_VALUE));
+        // itemStackHandler.setStackInSlot(0, new ItemStack(Items.STONE, Integer.MAX_VALUE));
     }
 
     public void cycleActive() {
@@ -85,9 +88,8 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
             } else {
                  int blockRemaining = itemStackHandler.getStackInSlot(0).getCount(); // 模拟提取只会得到64的stack
                  int blockToPlacing = 256 * (range * 2 + 1) * (range * 2 + 1);
-                 sendMsgToNearestPlayer(blockRemaining + "");
                  if (blockRemaining < blockToPlacing) {
-                     sendMsgToNearestPlayer("方块不足，无法放置");
+                     sendMsgToNearestPlayer("方块数量不足以填满设定范围（需 " + blockToPlacing + " 个）");
                      return;
                  }
                 level.setBlockAndUpdate(getBlockPos(), this.getBlockState().cycle(ChunkEraserBlock.ACTIVE));
@@ -106,33 +108,23 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
 
     public void changeRange(int id) {
         if (level != null && !level.isClientSide) {
-            if (id == ChunkEraserMenu.BUTTON_RANGE_ADD_ID) {
-                range++;
-                resetCursor();
-                level.setBlockAndUpdate(getBlockPos(), this.getBlockState().setValue(ChunkEraserBlock.ACTIVE, false));
-                setChangedAndSendBlockUpdated();
-            }
-            if (id == ChunkEraserMenu.BUTTON_RANGE_SUB_ID) {
-                range--;
-                resetCursor();
-                level.setBlockAndUpdate(getBlockPos(), this.getBlockState().setValue(ChunkEraserBlock.ACTIVE, false));
-                setChangedAndSendBlockUpdated();
-            }
+            if (id == ChunkEraserMenu.BUTTON_RANGE_ADD_ID) range++;
+            if (id == ChunkEraserMenu.BUTTON_RANGE_SUB_ID) range--;
+            // 简单的边界检查是个好习惯
+            if (range < 0) range = 0;
+
+            resetCursor();
+            level.setBlockAndUpdate(getBlockPos(), this.getBlockState().setValue(ChunkEraserBlock.ACTIVE, false));
+            setChangedAndSendBlockUpdated();
         }
     }
 
     public void changeOPT(int id) {
         if (level != null && !level.isClientSide) {
-            if (id == ChunkEraserMenu.BUTTON_SPEED_ADD_ID) {
-                opsPerTick += 5;
-                //resetCursor();
-                setChangedAndSendBlockUpdated();
-            }
-            if (id == ChunkEraserMenu.BUTTON_SPEED_SUB_ID) {
-                opsPerTick -= 5;
-                //resetCursor();
-                setChangedAndSendBlockUpdated();
-            }
+            if (id == ChunkEraserMenu.BUTTON_SPEED_ADD_ID) opsPerTick += 5;
+            if (id == ChunkEraserMenu.BUTTON_SPEED_SUB_ID) opsPerTick -= 5;
+            if (opsPerTick < 1) opsPerTick = 1;
+            setChangedAndSendBlockUpdated();
         }
     }
 
@@ -146,6 +138,8 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     public void changeIsPlacing() {
         if (level != null && !level.isClientSide) {
             isPlacing = !isPlacing;
+            resetCursor();
+            level.setBlockAndUpdate(getBlockPos(), this.getBlockState().setValue(ChunkEraserBlock.ACTIVE, false));
             setChangedAndSendBlockUpdated();
         }
     }
@@ -164,11 +158,21 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
     }
 
     public static void tickServer(Level level, BlockPos blockPos, BlockState blockState, ChunkEraserBlockEntity blockEntity) {
-        if (level.isClientSide || !blockState.getValue(ChunkEraserBlock.ACTIVE)) return;
-        if (!blockEntity.isPlacing) {
-            blockEntity.processChunkMining();
-        } else {
-            blockEntity.processChunkPlacing();
+        if (level.isClientSide) return;
+
+        // 每个tick重置变化标记
+        blockEntity.inventoryChanged = false;
+
+        if (blockState.getValue(ChunkEraserBlock.ACTIVE)) {
+            if (!blockEntity.isPlacing) {
+                blockEntity.processChunkMining();
+            } else {
+                blockEntity.processChunkPlacing();
+            }
+        }
+
+        if (blockEntity.inventoryChanged) {
+            blockEntity.setChangedAndSendBlockUpdated();
         }
     }
 
@@ -292,7 +296,6 @@ public class ChunkEraserBlockEntity extends BlockEntity implements MenuProvider 
         if (!itemStackHandler.getStackInSlot(0).isEmpty()) {
             storedItem = itemStackHandler.getStackInSlot(0).getItem();
             storedCount = itemStackHandler.getStackInSlot(0).getCount();
-            System.out.println(storedCount);
             String itemKey = BuiltInRegistries.ITEM.getKey(this.storedItem).toString();
             tag.putString("StoredItemType", itemKey);
             tag.putInt("StoredItemCount", this.storedCount);
